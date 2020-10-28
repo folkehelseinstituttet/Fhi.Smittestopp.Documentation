@@ -1,0 +1,2 @@
+# Documentation repository for Smittestopp
+
