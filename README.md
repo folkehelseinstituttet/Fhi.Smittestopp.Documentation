@@ -2,7 +2,7 @@
 
 ## Components overview
 
-An overview of the different components involved in the Smittestopp application is illustraded by the diagram below.
+An overview of the different components involved in the Smittestopp application is illustrated by the diagram below.
 
 ![Smittestopp components overview](diagrams/Smittestopp_gaen_components_en.png)
 
@@ -26,11 +26,11 @@ The central backend responsible for distributing the diagnosis keys used by the 
 
 ### Smittestopp app
 
-The application running on each users phone, responsible for activating the Exposure Notification framework to start the distributed contact tracing, receving diagnosis keys from the backend to check for exposure, and uploading diagnosis keys upon verified infection for the user.
+The application running on each user's phone, responsible for activating the Exposure Notification framework to start the distributed contact tracing, receiving diagnosis keys from the backend to check for exposure, and uploading diagnosis keys upon verified infection for the user.
 
 ### Smittestopp verification
 
-The solution responsible for verifying the infection status of a user and gratning access to notifying their contacts of exposure. 
+The solution responsible for verifying the infection status of a user and granting access to notifying their contacts of exposure. 
 [The source code for the verification solution can be found on github here](https://github.com/folkehelseinstituttet/Fhi.Smittestopp.Verification). The verification is done by first authenticating the user through [ID-porten](http://eid.difi.no/en/id-porten), and then performing an infection status lookup in MSIS ([Norwegian Surveillance System for Communicable Diseases](https://www.fhi.no/en/hn/health-registries/msis/)).
 
 
