@@ -15,7 +15,7 @@ This information can later be used to detect exposure from any TEKs linked to in
 ![Smittestopp components overview](diagrams/Smittestopp_contact_registration_en.png)
 ## Verify infection and notify exposure
 
-The figure below illustrates how a user can notify their digital close contacts through the application.
+The figure below illustrates how a user can notify their digital contacts of exposure through the application.
 
 Once a user has been informed that they have tested positive for COVID-19, they may start the notification process through the app.
 The first step of this process is to verify the infection status of the user.
