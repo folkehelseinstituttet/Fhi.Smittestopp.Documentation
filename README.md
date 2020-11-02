@@ -26,7 +26,7 @@ The central backend responsible for distributing the diagnosis keys used by the 
 
 ### Smittestopp app
 
-The application running on each user's phone, responsible for activating the Exposure Notification framework to start the distributed contact tracing, receiving diagnosis keys from the backend to check for exposure, and uploading diagnosis keys upon verified infection for the user.
+The application running on each user's phone, responsible for activating the Exposure Notification framework to start the decentralized contact tracing, receiving diagnosis keys from the backend to check for exposure, and uploading diagnosis keys upon verified infection for the user.
 
 ### Smittestopp verification
 

@@ -1,10 +1,10 @@
 # Exposure Notification Processes
 
-This document describes the processes, related to GAEN, used in the app to perform distributed contact registration, letting an infected user notify their digital contacts, and notifying app users of exposure.
+This document describes the processes, related to GAEN, used in the app to perform decentralized contact registration, letting an infected user notify their digital contacts, and notifying app users of exposure.
 
-## Distributed contact registration
+## Decentralized contact registration
 
-The figure below illustrates how the distributed contact registation works between two different users of an app using the GAEN-framework.
+The figure below illustrates how the decentralized contact registation works between two different users of an app using the GAEN-framework.
 
 Once activated through consent from the user, the apps will generate daily keys called Temporary Exposure Keys (TEKs).
 From these keys, a Rotating Proximity Identifier (RPI) is generated every 5-10 minutes.
