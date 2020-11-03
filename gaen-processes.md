@@ -26,7 +26,7 @@ To successfully verify infection status, the user must be at least 16 years of a
 
 The verification solution keeps track of how many verifications have been performed by the same user within the last 24 hours.
 If a user has exceeded 3 verifications in the relevant time period, they will be flagged as blocked from performing the actual notification process.
-The performed verifications are recorded using the pseudonym provided from ID-porten, hashed with HMACSHA256 with unique salt.
+The performed verifications are recorded using the pseudonym provided from ID-porten, hashed with HMACSHA256 with shared salt ("pepper").
 
 Once the verification is completed, the user is returned to the app with an access token containing both the information needed by the app to continue the process, as well as the necessary claims to perform an upload of diagnosis keys to the central backend.
 
