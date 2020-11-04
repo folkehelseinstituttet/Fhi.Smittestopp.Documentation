@@ -26,7 +26,7 @@ To successfully verify infection status, the user must be at least 16 years of a
 
 The verification solution keeps track of how many verifications have been performed by the same user within the last 24 hours.
 If a user has exceeded 3 verifications in the relevant time period, they will be flagged as blocked from performing the actual notification process.
-The performed verifications are recorded using a hash of the pseudonym provided from ID-porten.
+The performed verifications are recorded using the pseudonym provided from ID-porten, hashed with HMACSHA256 with shared salt ("pepper").
 
 Once the verification is completed, the user is returned to the app with an access token containing both the information needed by the app to continue the process, as well as the necessary claims to perform an upload of diagnosis keys to the central backend.
 
@@ -48,7 +48,7 @@ Through the GAEN-framework, the app makes sure that en exposure check is perform
 The first step is to retrieve new diagnosis keys (TEKs + infectiousness) from the central backend solution.
 These new keys are then provided to the GAEN-framework, and together with any diagnosis keys provided earlier, exposure information is proveded to the app.
 The way GAEN determines exposure is by calculating all valid RPIs for all TEKs provided, and then looking for matches with RPIs recorded on the device during contact registation.
-For any matches, the time period a contact was recorded for, the estimated distance to the device emitting the RPI (based on signal strength), and the infectiousness value for the relevant TEK is used to determine the risk value.
+For any matches, the time period a contact was recorded for, the signal strength to the device emitting the RPI (used to estimate distance), and the infectiousness value for the relevant TEK is used to determine the risk value.
 In addition to risk values, the exposure information from GAEN includes rough information about duration, time of contact, etc., for qualified exposures, according to the configuration provided by the app.
 
 The app itself then evaluates this exposure information to determine if there has been any exposures of sufficient risk, and decides if the user should be notified of exposure or not.
