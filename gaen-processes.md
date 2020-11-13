@@ -43,7 +43,7 @@ The app then retrieved all TEKs for the last 14 days from GAEN, combines these w
 
 The figure below illustrates the process for detecting and notifying a user of exposure.
 
-Through the GAEN-framework, the app makes sure that en exposure check is performed periodically (typically a few times a day).
+Through the GAEN-framework, the app makes sure that an exposure check is performed periodically (typically a few times a day).
 
 The first step is to retrieve new diagnosis keys (TEKs + infectiousness) from the central backend solution.
 These new keys are then provided to the GAEN-framework, and together with any diagnosis keys provided earlier, exposure information is proveded to the app.
