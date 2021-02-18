@@ -39,6 +39,8 @@ The app then retrieved all TEKs for the last 14 days from GAEN, combines these w
 
 ![Smittestopp components overview](diagrams/Smittestopp_notify_contacts_en.png)
 
+An alternative flow for performing infection verification and diagnosis keys upload, using [anonymous tokens](https://github.com/HenrikWM/anonymous-tokens/wiki), has also been implemented and is [described further here](anonymous-tokens.md).
+
 ## Detecting exposure
 
 The figure below illustrates the process for detecting and notifying a user of exposure.
