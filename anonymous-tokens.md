@@ -34,7 +34,7 @@ curl --location --request POST 'https://localhost:5001/api/anonymoustokens' \
 --header 'Authorization: Bearer <JWT access token>' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "maskedPoint": "<base64-encoded randomized token seed (t)>"
+    "maskedPoint": "<base64-encoded masked point (P)>"
 }'
 ```
 
