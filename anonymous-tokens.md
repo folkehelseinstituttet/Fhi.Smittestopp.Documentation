@@ -3,8 +3,8 @@
 As a additional privacy measure, an an alternate authorization method for uploading TEKs has been introduced.
 This method exchanges the JWT access token for an anonymous token, which removes the possibility of the two backend solutions,
 Fhi.Smittestopp.Backend and Fhi.Smittestopp.Verification, to link verification attempts to uploaded TEKs through the token used for authorization.
-You can find more information about what anonymous tokens are and how they work in [the github repo wiki](https://github.com/HenrikWM/anonymous-tokens/wiki).
-The [readme of the github repo](https://github.com/HenrikWM/anonymous-tokens) also contains sample code for how to use the package.
+This document focuses on technical details of how anonymous tokens has been implemented in this application, while you can find more general information about what anonymous tokens are and how they work in [the anonymous-tokens github repo wiki](https://github.com/HenrikWM/anonymous-tokens/wiki).
+The [readme of the anonymous-tokens  github repo](https://github.com/HenrikWM/anonymous-tokens) also contains sample code for how to use the package.
 
 ## New infection verification and TEK upload flow
 
@@ -20,14 +20,14 @@ The changes in the flow is shown from step 1.2 onwards in the diagram below.
 
 Enabling/disabling the anonymous token feature is controlled from the verification solution.
 Internally, this feature is enabled/disabled through the appsetting  `common:anonymousTokens:enabled`.
-If enabled, and the authenticated user is verified COVID-19 positive,
-the JWT access token will include a new claim, `covid19_anonymous_token=v1_enabled`, which will activate the new behaviour in the client. The backend should still accept JWT tokens for authentication, regardless of this feature flag, to retain backwards compatibility with older versions of the app.
+If enabled, issued JWT access token will include a new claim, `covid19_anonymous_token=v1_enabled`, which will activate the new behaviour in the client. The backend should still accept JWT tokens for authentication, regardless of this feature flag, to retain backwards compatibility with older versions of the app.
 
 #### Anonymous token endpoints
 
 Two new endpoints have been added to the verification solution, and are active if the feature flag is enabled.
 
-The first endpoint is used for exchanging a JWT-access token for an anonymous token. Access to this endpoint is granted through the claim `role=upload-approved` (combines positive test found and not blocked).
+The first endpoint is used for exchanging a JWT-access token for an anonymous token.
+Access to this endpoint is granted through the claim `role=upload-approved` (combines positive test found and not blocked due to having exceeded the limit for allowed repeated attempts).
 
 ```bash
 curl --location --request POST 'https://localhost:5001/api/anonymoustokens' \
@@ -103,10 +103,10 @@ and the correct element to validate an anonymous token should be retrieved by ma
 
 A new authentication option has been added to the TEK upload API on the backend server in addition to the existing `Bearer` scheme using the JWTs.
 
-The new authentication option uses the scheme `Anonymous` and assumes the following structure for the `Authentication` header
+The new authentication option uses the scheme `Anonymous` and assumes the following structure for the `Authorization` header
 
 ```http
-Authentication: Anonymous <submitted point>.<token seed>.<kid>
+Authorization: Anonymous <submitted point>.<token seed>.<kid>
 ```
 
 The validation of the incoming tokens is performed by the backend roughly as follows
@@ -126,7 +126,9 @@ var privateKey = _anonymousTokenKeySource.GetPrivateKey(keyId);
 var isValid = await _tokenVerifier.VerifyTokenAsync(privateKey, _anonymousTokenKeySource.ECParameters.Curve, tokenSeed, submittedPoint);
 ```
 
-The `ISeedStore` must be implemented to prevent token replay attacks, and `_anonymousTokenKeySource.GetPrivateKey(keyId)` must always return the same private key for a given keyId as the one used by the verification solution, to be able to correctly verify the token.
+The `ISeedStore` must be implemented to prevent token replay attacks,
+and `_anonymousTokenKeySource.GetPrivateKey(keyId)` must always return the same private key for a given keyId as the one used by the verification solution,
+to be able to correctly verify the token.
 
 ### New client behaviour
 
@@ -134,51 +136,57 @@ Given that the feature flag is present in the JWT access token returned to the c
 the client will performs some additional steps prior to uploading the TEKs to the backend.
 
 1. Perform the necessary client side initialization of the anonymous token request.
-    ```c#
-    // using AnonymousTokens.Client.Protocol
-    // _initiator = new Initiator()
-    // _ecParameters = CustomNamedCurves.GetByOid(X9ObjectIdentifiers.Prime256v1)
-    var init = _initiator.Initiate(_ecParameters.Curve);
-    var state =  new AnonymousTokenState
-    {
-        t = init.t,
-        r = init.r,
-        P = init.P
-    };
-    var tokenRequest = new GenerateTokenRequestModel
-    {
-        MaskedPoint = Convert.ToBase64String(state.P.GetEncoded())
-    };
-    ```
+   ```c#
+   // using AnonymousTokens.Client.Protocol
+   // _initiator = new Initiator()
+   // _ecParameters = CustomNamedCurves.GetByOid(X9ObjectIdentifiers.Prime256v1)
+   var init = _initiator.Initiate(_ecParameters.Curve);
+   var state =  new AnonymousTokenState
+   {
+       t = init.t,
+       r = init.r,
+       P = init.P
+   };
+   var tokenRequest = new GenerateTokenRequestModel
+   {
+       MaskedPoint = Convert.ToBase64String(state.P.GetEncoded())
+   };
+   ```
+   **Note that the current implementation depends on the client knowing which curve (Prime256v1) to use during initialization of the anonymous token request.**
+   For now, all components are configured in advance to agree on which curve to use.
+   Future enhancements may change this to having the klient request this information from one of the backend services.
 1. After requesting an anonymous token using the request object above,
-   and the JWT from verification,
+   and authenticating using the JWT retrived from the verification flow,
    the client randomizes the anonymous token,
    using the tokenResponse returned from the verification server,
+   the state from initialization,
    as well as the public key used for creating the token,
    retrieved from the atks-endpoint.
    ```c#
-    // using Org.BouncyCastle.Math
-    // X9ECParameters ecParameters = CustomNamedCurves.GetByName("P-256"); // or "crv" from the matching public key
-    var K = DecodePublicKey(atksResponse.Keys.Single(k => k.Kid == tokenResponse.kid))
-    var Q = _ecParameters.Curve.DecodePoint(Convert.FromBase64String(tokenResponse.SignedPoint));
-    var c = new BigInteger(Convert.FromBase64String(tokenResponse.ProofChallenge));
-    var z = new BigInteger(Convert.FromBase64String(tokenResponse.ProofResponse));
-    var token = _initiator.RandomiseToken(_ecParameters, K, state.P, Q, c, z, state.r);
-    ```
-1. The anonymous authentication header value can then be constructed as follows
-    ```c#
-    var t = state.t;
-    var W = token;
-    var keyId = tokenResponse.Kid;
-    var encodedToken = Convert.ToBase64String(W.GetEncoded()) + "." + Convert.ToBase64String(t) + "." + keyId;
-    var authHeaderValue = $"Anonymous {encodedToken}"
-    ```
+   // using Org.BouncyCastle.Math
+   // X9ECParameters ecParameters = CustomNamedCurves.GetByName("P-256"); // or "crv" from the matching public key
+   var K = DecodePublicKey(atksResponse.Keys.Single(k => k.Kid == tokenResponse.kid))
+   var Q = _ecParameters.Curve.DecodePoint(Convert.FromBase64String(tokenResponse.SignedPoint));
+   var c = new BigInteger(Convert.FromBase64String(tokenResponse.ProofChallenge));
+   var z = new BigInteger(Convert.FromBase64String(tokenResponse.ProofResponse));
+   var token = _initiator.RandomiseToken(_ecParameters, K, state.P, Q, c, z, state.r);
+   ```
+1. The anonymous authentication header value, which will replace the Bearer token header,
+   can then be constructed as follows
+   ```c#
+   var t = state.t;
+   var W = token;
+   var keyId = tokenResponse.Kid;
+   var encodedToken = Convert.ToBase64String(W.GetEncoded()) + "." + Convert.ToBase64String(t) + "." + keyId;
+   var authHeaderValue = $"Anonymous {encodedToken}"
+   ```
 
 ## Environment setup requirements
 
 ### Shared private key
 
-The same private key is used to both issue anonymous tokens from the secure token server, as well as validating calls to the API protected by the anonymous tokens. As a result, the STS (Fhi.Smittestopp.Verification) and the API (Fhi.Smittestopp.Backend) must at all times agree on the private key used.
+The same private key is used to both issue anonymous tokens from the secure token server, as well as validating calls to the API protected by the anonymous tokens.
+As a result, the STS (Fhi.Smittestopp.Verification) and the API (Fhi.Smittestopp.Backend) must at all times agree on the private key used for signing tokens.
 
 ### Rotating shared private key
 
@@ -189,7 +197,23 @@ However, a too short timespan for each key is not desired either, as that would 
 To avoid having to constantly generate new private keys, and keeping these in sync between the STS and the API,
 a method of generating short lived private keys from a shared long lived master key has been adopted.
 Then the requirements are reduced to agreeing on the shared master key,
-and how long each generated short lived private key should be valid for. (And optionally, defining a rollover period).
+and how long each generated short lived private key should be valid for.
+(And optionally, defining a rollover period.)
+
+The shared master key is currently handled through a shared certificate installed on both the verification solution, and the backend solution.
+Note that the current implementation does expect the certificate used being flagged with AllowPlaintextExport to be able import the private key for use in the internal application logic ([however, a workaround to handle cases where only the "AllowExport" flag is present has been implemented](https://github.com/folkehelseinstituttet/Fhi.Smittestopp.Verification/blob/7521b71d84593b09a4f4e4c28dfcb1ee790dfca0/Fhi.Smittestopp.Verification.Domain/AnonymousTokens/CertificatePrivateKeyBytesLoader.cs#L36)). A self signed certificate satisfying these criterias could be created as follows:
+
+```powershell
+New-SelfSignedCertificate -KeyAlgorithm ECDSA_secP256r1 -CertStoreLocation "cert:\LocalMachine\My" -Subject "CN=test-vl-op.ss2np.fhi.no" -KeyExportPolicy Exportable,ExportableEncrypted
+```
+
+Note: Although this certificate is flagged with "AllowPlaintextExport" after creation, [this flag does seem to disappear when exporting the created certificate to a different machine](https://docs.microsoft.com/en-us/answers/questions/280592/ncrypt-allow-plaintext-export-flag-removed-during.html).
+
+#### IIS Specific setup
+
+If an application is hosted through IIS, it must activate the option "Load User Profile" for the application pool instance, [otherwise it will not be able to load the certificate private key into memory](https://github.com/aspnet-contrib/AspNet.Security.OAuth.Providers/issues/375) 
+
+#### Key generation
 
 The first step then is to generate the private key interval number (also used as kid) for a given point in time, which should be done as follows.
 
