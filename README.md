@@ -10,7 +10,7 @@ The solution consists of a number of new components created specifically for thi
 
 - Smittestopp Backend
 - Smittestopp App
-- Smittestopp Verification
+- [Smittestopp Verification](verification-solution.md)
 
 In addition, the solution reuses a number of existing components/solutions
 
