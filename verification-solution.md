@@ -63,8 +63,6 @@ covid19_smitte_start=yyyy-MM-dd // sampling date of COVID-19 test
 covid19_blokeret=false
 ```
 
-
-
 A user which *does have* a negative COVID-19 test OR requested to skip the MSIS lookup, *is at least* 16 years old,
 and has not performed the verification flow more than the allowed number of times will have the following claims.
 
@@ -72,6 +70,7 @@ and has not performed the verification flow more than the allowed number of time
 covid19_status=negativ
 covid19_blokeret=false
 ```
+
 
 
 If a user satisfies the requirements for age, but has been blocked due to too many attempts at performing the verification flow,
@@ -83,10 +82,17 @@ covid19_limit_duration=24
 covid19_limit_count=3
 ```
 
-Thus, to authorize a user to upload their diagnosis keys using only the DK-compatible claims,
-one must require that the `covid19_status` claim is present with a value `positiv` and that the `covid19_blokeret` claim is present with a value `false`.
+A user which *is not* at least 16 years old will have the following claims:
+```
+covid19_blokeret=true
+covid19_limit_duration=24
+covid19_limit_count=3
+```
+ This user does not get the `role`-claim with a value of `upload-approved` and is blocked from uploading and exchanging their token.
 
-As of february 2022, users get to upload their tokens to retrieve an anonymous token even if they have a `covid19_status `claim with a value of `negativ`
+
+Thus, to authorize a user to upload their diagnosis keys using only the DK-compatible claims,
+one must require that the `covid19_blokeret` claim is present with a value `false` and a `role`-claim is present with a value of `upload-approved`
 
 ## Anonymous tokens
 
