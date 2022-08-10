@@ -1,5 +1,8 @@
 # Smittestopp (NO exposure notification app)
 
+**This app has been retired as of August 10th 2022, see [information here](https://www.fhi.no/nyheter/2022/fhi-legger-ned-smittestopp/)**
+
+
 ## Components overview
 
 An overview of the different components involved in the Smittestopp application is illustrated by the diagram below.
